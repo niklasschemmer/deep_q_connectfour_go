@@ -11,10 +11,6 @@ from statistics import mean
 from collections import namedtuple
 import tensorflow as tf
 
-#tf.get_logger().setLevel('WARNING')
-#tf.autograph.set_verbosity(2)
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-
 class EpsilonGreedyStrategy():
 	def __init__(self, start, end, decay):
 		self.start = start
@@ -24,7 +20,7 @@ class EpsilonGreedyStrategy():
 	def get_exploration_rate(self, current_step):
 		return self.end + (self.start - self.end) * math.exp(-1*current_step*self.decay)
 
-class DQN_Agent():
+class DeepQ_Agent():
     def __init__(self, strategy, num_actions):
         self.strategy = strategy
         self.num_actions = num_actions
@@ -46,9 +42,15 @@ def copy_weights(Copy_from, Copy_to):
 def load_checkpoint(checkpoint, path):
     checkpoint.restore(path)
 
-def run_training(env, parameters, model, policy_net, target_net, cp_manager, memory, optimizer):
+def run_training(env, parameters, policy_net, target_net, cp_manager, memory, action_space, observation_space):
+    optimizer = tf.keras.optimizers.Adam(
+                    learning_rate=parameters['learning_rate'],
+                    beta_1=0.9,
+                    beta_2=0.999,
+                    epsilon=1e-07)
+
     strategy = EpsilonGreedyStrategy(parameters['eps_start'], parameters['eps_end'], parameters['eps_decay'])
-    model = DQN_Agent(strategy, parameters['action_space'])
+    model = DeepQ_Agent(strategy, action_space)
     
     Experience = namedtuple('Experience', ['observations','actions', 'rewards', 'next_observations', 'dones'])
 
@@ -76,23 +78,17 @@ def run_training(env, parameters, model, policy_net, target_net, cp_manager, mem
         env.reset()
         losses = []
 
-        last_state = {
-            'player_0': {
-                'observation': None,
-                'action': None,
-                'reward': 0
-            },
-            'player_1': {
+        last_state = {}
+        for agent in env.agents:
+            last_state[agent] = {
                 'observation': None,
                 'action': None,
                 'reward': 0
             }
-        }
 
         for agent in env.agent_iter():
-            observation, reward, done, info = env.last()
-            observation['observation'] = tf.reshape(observation['observation'], shape=(84))
-            reward *= 100
+            observation, reward, done, _ = env.last()
+            observation['observation'] = tf.reshape(observation['observation'], shape=(observation_space))
 
             checkpoint.step.assign_add(1)
 
@@ -135,14 +131,11 @@ def run_training(env, parameters, model, policy_net, target_net, cp_manager, mem
 
         copy_weights(policy_net, target_net)
 
-        total_rewards[epoch] = last_state['player_0']['reward'] + last_state['player_1']['reward']
-        avg_rewards = total_rewards[max(0, epoch - 100):(epoch + 1)].mean()
-
         if epoch%100 == 0:
             passed_time = (time.time() - start_time)
             start_time = time.time()
             formated = "{}".format(str(timedelta(seconds=passed_time * ((parameters['epochs']-epoch)/50))))
-            print(f"Episode:{epoch} Remaining Time: {formated} Episode_Reward:{total_rewards[epoch]} Avg_Reward:{avg_rewards: 0.1f} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
+            print(f"Episode:{epoch} Remaining Time: {formated} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
 
         if epoch%1000 == 500:
             cp_manager.save()

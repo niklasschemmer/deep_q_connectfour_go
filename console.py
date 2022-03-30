@@ -3,21 +3,32 @@ import os
 import time
 import keyboard
 import datetime
+from DeepQTraining import run_training
+from ReplayMemory import ReplayMemory
+from Model import DenseModel
+import tensorflow as tf
+import numpy as np
 
-from connect_four import Connect_Four
-from go import Go
+from pettingzoo.classic import connect_four_v3
+from pettingzoo.classic import go_v5
+
+tf.get_logger().setLevel('WARNING')
+tf.autograph.set_verbosity(2)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 
 games = {
-    Connect_Four: {
+    'connect_four': {
         'id': 'connect_four',
         'name': 'Connect Four',
-        'description': 'Connect-Four is a tic-tac-toe-like two-player game in which players alternately place pieces on a vertical board 7 columns across and 6 rows high.' # https://mathworld.wolfram.com
+        'description': 'Connect-Four is a tic-tac-toe-like two-player game in which players alternately place pieces on a vertical board 7 columns across and 6 rows high.', # https://mathworld.wolfram.com
+        'game_import': connect_four_v3
     },
-    Go: {
+    'go': {
         'id': 'go',
         'name': 'Go',
-        'description': 'Go is an adversarial game with the objective of surrounding a larger total area of the board with one\'s stones than the opponent. As the game progresses, the players position stones on the board to map out formations and potential territories.' # Matthews, Charles (2004). Teach Yourself Go.
+        'description': 'Go is an adversarial game with the objective of surrounding a larger total area of the board with one\'s stones than the opponent. As the game progresses, the players position stones on the board to map out formations and potential territories.', # Matthews, Charles (2004). Teach Yourself Go.
+        'game_import': go_v5
     }
 }
 
@@ -29,7 +40,7 @@ parameters = {
     'eps_decay': 0.000001,
     'memory_size': 1000000,
     'epochs': 170000,
-    'lr': 0.0001,
+    'learning_rate': 0.0001,
     'hidden_units': [100, 75, 50, 25]
 }
 
@@ -159,13 +170,26 @@ def play_pause(game, save_path):
 
 def train(game, save_path):
     try:
-        # start training
-        print("start training")
+        env = games[game]['game_import'].env()
+        env.reset()
+        action_space = env.action_space(env.agents[0]).n
+        observation_space = np.prod(env.observation_space(env.agents[0])['observation'].shape)
+        policy_net = DenseModel(parameters['hidden_units'], action_space)
+        target_net = DenseModel(parameters['hidden_units'], action_space)
+        memory = ReplayMemory(parameters['memory_size'])
+
+        checkpoint = tf.train.Checkpoint(model=policy_net, step=tf.Variable(0))
+        cp_manager = tf.train.CheckpointManager(checkpoint, save_path, max_to_keep=3)
+        if cp_manager.latest_checkpoint:
+            checkpoint.restore(cp_manager.latest_checkpoint)
+
+        run_training(env, parameters, policy_net, target_net, cp_manager, memory, action_space, observation_space)
     except KeyboardInterrupt:
         train_pause(game, save_path)
-    except Exception:
-        print("Error")
-        select_game()
+    except Exception as e:
+        print(e)
+        raise e
+        #select_game()
 
 def play(game, save_path):
     try:
