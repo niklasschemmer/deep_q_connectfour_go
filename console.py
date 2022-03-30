@@ -7,6 +7,7 @@ import datetime
 from connect_four import Connect_Four
 from go import Go
 
+
 games = {
     Connect_Four: {
         'id': 'connect_four',
@@ -38,7 +39,6 @@ class Menu():
         self.title = title
         self.items = []
         self.selected = 0
-        self.exit = False
 
     def append(self, name, function, attributes, description=''):
         self.items.append(MenuItem(name, function, attributes, description))
@@ -84,7 +84,6 @@ class Menu():
         keyboard.remove_hotkey('up')
         keyboard.remove_hotkey('down')
         keyboard.remove_hotkey('enter')
-        exit = True
         self.cls()
         self.items[self.selected].function(*self.items[self.selected].attributes)
 
@@ -93,8 +92,6 @@ class Menu():
         keyboard.add_hotkey('down', self.down)
         keyboard.add_hotkey('enter', self.select)
         self.draw()
-        while not exit:
-            pass
 
     def cls(self):
         os.system('cls' if os.name=='nt' else 'clear')
@@ -181,3 +178,4 @@ def play(game, save_path):
         select_game()
 
 greeting(select_game)
+keyboard.wait()
