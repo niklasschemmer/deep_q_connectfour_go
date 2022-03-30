@@ -42,7 +42,7 @@ def copy_weights(Copy_from, Copy_to):
 def load_checkpoint(checkpoint, path):
     checkpoint.restore(path)
 
-def run_training(env, parameters, policy_net, target_net, cp_manager, memory, action_space, observation_space):
+def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, memory, action_space, observation_space):
     optimizer = tf.keras.optimizers.Adam(
                     learning_rate=parameters['learning_rate'],
                     beta_1=0.9,
@@ -51,7 +51,7 @@ def run_training(env, parameters, policy_net, target_net, cp_manager, memory, ac
 
     strategy = EpsilonGreedyStrategy(parameters['eps_start'], parameters['eps_end'], parameters['eps_decay'])
     model = DeepQ_Agent(strategy, action_space)
-    
+
     Experience = namedtuple('Experience', ['observations','actions', 'rewards', 'next_observations', 'dones'])
 
     copy_weights(policy_net, target_net)

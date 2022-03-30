@@ -14,7 +14,7 @@ from pettingzoo.classic import go_v5
 
 tf.get_logger().setLevel('WARNING')
 tf.autograph.set_verbosity(2)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 games = {
@@ -183,7 +183,7 @@ def train(game, save_path):
         if cp_manager.latest_checkpoint:
             checkpoint.restore(cp_manager.latest_checkpoint)
 
-        run_training(env, parameters, policy_net, target_net, cp_manager, memory, action_space, observation_space)
+        run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, memory, action_space, observation_space)
     except KeyboardInterrupt:
         train_pause(game, save_path)
     except Exception as e:
