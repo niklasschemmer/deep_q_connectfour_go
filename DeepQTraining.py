@@ -60,19 +60,6 @@ def run_training(env, parameters, policy_net, target_net, cp_manager, memory, ac
     folder_path = 'checkpoints/' + parameters_str + '/'
     save_path = folder_path + str(int(time.time()))
 
-    if os.path.isdir(folder_path):
-        sessions = [f for f in os.listdir(folder_path) if os.path.isdir(folder_path + f)]
-        for i in range(len(sessions)):
-            print(i, ': ', datetime.datetime.fromtimestamp(int(sessions[i])))
-        nr = int(input('enter the number of a save or -1 for a new session: '))
-        if nr >= 0 and nr < len(sessions):
-            save_path = folder_path + sessions[nr]
-
-    checkpoint = tf.train.Checkpoint(model=policy_net, step=tf.Variable(0))
-    cp_manager = tf.train.CheckpointManager(checkpoint, save_path, max_to_keep=3)
-    if cp_manager.latest_checkpoint:
-        checkpoint.restore(cp_manager.latest_checkpoint)
-
     start_time = time.time()
     for epoch in range(parameters['epochs']):
         env.reset()
