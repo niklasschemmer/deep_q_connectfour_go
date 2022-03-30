@@ -16,7 +16,6 @@ tf.get_logger().setLevel('WARNING')
 tf.autograph.set_verbosity(2)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-
 games = {
     'connect_four': {
         'id': 'connect_four',
