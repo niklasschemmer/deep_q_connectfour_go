@@ -1,5 +1,3 @@
-from plotnine import ggplot, aes, geom_line
-from plotnine import qplot
 import matplotlib.pyplot as plt
 import csv
 import numpy as np
