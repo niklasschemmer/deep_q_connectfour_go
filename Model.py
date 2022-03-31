@@ -52,3 +52,14 @@ class DenseModel(tf.keras.Model):
         output = self.output_layer(x)
 
         return output
+
+    def copy_weights_to(self, copy_to: tf.keras.Model):
+        """
+        This copies the weights to another network.
+
+        Parameter copy_to: The model the weights are copied to
+        """
+        variables2 = self.trainable_variables
+        variables1 = copy_to.trainable_variables
+        for v1, v2 in zip(variables1, variables2):
+            v1.assign(v2.numpy())
