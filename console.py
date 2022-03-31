@@ -44,7 +44,7 @@ parameters = {
     'gamma': 0.99,
     'eps_start': 1,
     'eps_end': 0,
-    'eps_decay': 0.00001,
+    'eps_decay': 0.000001,
     'memory_size': 1000000,
     'epochs': 170000,
     'learning_rate': 0.0001,
@@ -138,6 +138,7 @@ def select_play(game):
     menu.append('Train Agent', train_load, [game], f'Train the agent in {games[game]["name"]} to become an unbeatable AI!')
     menu.append('Play against Agent', play_load, [game], f'Play against the agent in {games[game]["name"]} and get defeated by your own creation!')
     menu.append('Plot the accuracy of a saved training', plot_load, [game], f'Plot the accuracy of the quality measurement of a previous training. Note: you can only load saved trainings that used the same parameters that you defined.')
+    menu.append('<- Back', select_game, [])
     menu.start()
 
 def train_load(game):
@@ -151,6 +152,7 @@ def train_load(game):
     menu.append('New Training', train, [game, folder_path + str(int(time.time()))])
     for i in range(len(sessions)):
         menu.append(str(datetime.datetime.fromtimestamp(int(sessions[i]))), train, [game, folder_path + sessions[i]])
+    menu.append('<- Back', select_play, [game])
     menu.start()
 
 def play_load(game):
@@ -166,6 +168,7 @@ def play_load(game):
     menu.append('Play against untrained Agent', play, [game, folder_path + str(int(time.time()))])
     for i in range(len(sessions)):
         menu.append(str(datetime.datetime.fromtimestamp(int(sessions[i]))), play, [game, folder_path + sessions[i]])
+    menu.append('<- Back', select_play, [game])
     menu.start()
 
 def plot_load(game):
@@ -180,6 +183,7 @@ def plot_load(game):
         menu.append('Train Agent first', train_load, [game])
     for i in range(len(sessions)):
         menu.append(str(datetime.datetime.fromtimestamp(int(sessions[i]))), start_plot, [game, folder_path + sessions[i]])
+    menu.append('<- Back', select_play, [game])
     menu.start()
 
 def start_plot(game, save_path):
@@ -189,7 +193,7 @@ def start_plot(game, save_path):
 def play_pause(game, play_again):
     menu = Menu(f'Do you want to play {games[game]["name"]} again or return to the menu?')
     menu.append('Play again', play_again, [])
-    menu.append('Return to menu', select_game, [])
+    menu.append('<- Back', play_load, [game])
     menu.start()
 
 
