@@ -107,10 +107,10 @@ def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager
                 last_state[agent]['reward'] += reward
 
                 if last_state[agent]['action'] != None:
-                    memory.push(Experience(last_state[agent]['observation'], last_state[agent]['action'], observation['observation'], reward, done))
+                    memory.add(Experience(last_state[agent]['observation'], last_state[agent]['action'], observation['observation'], reward, done))
 
-                    if memory.can_provide_sample(parameters['batch_size']):
-                        experiences = memory.sample(parameters['batch_size'])
+                    if memory.has_batch_length(parameters['batch_size']):
+                        experiences = memory.random_sample(parameters['batch_size'])
                         batch = Experience(*zip(*experiences))
 
                         observations, actions, rewards, next_observations, dones = np.asarray(batch[0]),np.asarray(batch[1]),np.asarray(batch[3]),np.asarray(batch[2]),np.asarray(batch[4])
