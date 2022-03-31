@@ -167,11 +167,11 @@ def play_load(game):
         menu.append(str(datetime.datetime.fromtimestamp(int(sessions[i]))), play, [game, folder_path + sessions[i]])
     menu.start()
 
-def train_pause(game, save_path):
-    print("pause")
-
-def play_pause(game, save_path):
-    print("pause")
+def play_pause(game, play_again):
+    menu = Menu(f'Do you want to play {games[game]["name"]} again or return to the menu?')
+    menu.append('Play again', play_again, [])
+    menu.append('Return to menu', select_game, [])
+    menu.start()
 
 
 def train(game, save_path):
@@ -190,12 +190,9 @@ def train(game, save_path):
             checkpoint.restore(cp_manager.latest_checkpoint)
 
         run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, memory, action_space, observation_space)
-    except KeyboardInterrupt:
-        train_pause(game, save_path)
     except Exception as e:
         print(e)
         raise e
-        #select_game()
 
 def play(game, save_path):
     try:
@@ -210,14 +207,15 @@ def play(game, save_path):
         if cp_manager.latest_checkpoint:
             checkpoint.restore(cp_manager.latest_checkpoint)
 
-        while True:
-            test_game(env, games[game]['play'](), policy_net, observation_space)
-    except KeyboardInterrupt:
-        play_pause(game, save_path)
+        play_loop(env, game, policy_net, observation_space)
+
     except Exception as e:
         print(e)
         raise e
-        #select_game()
+
+def play_loop(env, game, policy_net, observation_space):
+    test_game(env, games[game]['play'](), policy_net, observation_space)
+    play_pause(game, lambda: play_loop(env, game, policy_net, observation_space))
 
 greeting(select_game)
 keyboard.wait()
