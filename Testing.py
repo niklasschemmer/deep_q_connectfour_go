@@ -4,16 +4,19 @@ import time
 
 def test_game(env, game, policy_net, observation_space):
     env.reset()
+    player_name = ''
 
     for agent in env.agent_iter():
+        if player_name == '':
+            player_name = agent
 
         env.render(mode='human')
         observation, reward, done, info = env.last()
         observation_reshaped = tf.reshape(observation['observation'], shape=(observation_space))
-        game.draw(observation['observation'], agent == 'player_0' if not done else False)
+        game.draw(observation['observation'], agent == player_name if not done else False)
 
         if done == False:
-            if agent == 'player_0':
+            if agent == player_name:
                 action = game.manual_policy(observation['observation'], observation['action_mask'])
             else:
                 time.sleep(1)
@@ -21,7 +24,7 @@ def test_game(env, game, policy_net, observation_space):
 
             env.step(action)
         else:
-            if agent == 'player_0':
+            if agent == player_name:
                 game.win()
             else:
                 game.lose()
