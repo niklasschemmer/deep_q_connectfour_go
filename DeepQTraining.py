@@ -140,19 +140,7 @@ def test_against_random_policy(env, model: object, policy_net: object, observati
     # Calculate win rate from the amount of won games
     return policy_wins/num_games
 
-<<<<<<< Updated upstream
-def copy_weights(Copy_from, Copy_to):
-	variables2 = Copy_from.trainable_variables
-	variables1 = Copy_to.trainable_variables
-	for v1, v2 in zip(variables1, variables2):
-		v1.assign(v2.numpy())
-
-def load_checkpoint(checkpoint, path):
-    checkpoint.restore(path)
-
-def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, save_path, memory, action_space, observation_space):
-=======
-def run_training(env: object, training_parameters: dict, policy_net: object, target_net: object, checkpoint: tf.train.Checkpoint, cp_manager: tf.train.CheckpointManager, memory: ReplayMemory, action_space: int, observation_space: int):
+def run_training(env: object, training_parameters: dict, policy_net: object, target_net: object, checkpoint: tf.train.Checkpoint, cp_manager: tf.train.CheckpointManager, save_path: str, memory: ReplayMemory, action_space: int, observation_space: int):
     """
     This starts the Q training with the given parameters.
 
@@ -169,7 +157,6 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
     Parameter action_space: The amount of actions that can be played in the game
     Parameter observation_space: The dimensions of the observation space of the game
     """
->>>>>>> Stashed changes
     with tf.device("GPU"):
         # Using adam optimizer for the training, others can be chosen as well
         optimizer = tf.keras.optimizers.Adam(
@@ -272,7 +259,8 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
             epoch = int(checkpoint.epoch)
 
             # Format the remaining time for the console print
-            formated = "{}".format(str(timedelta(seconds=passed_time * ((parameters['epochs']-epoch)/100))))
+            passed_time = time.time() - start_time
+            formated = "{}".format(str(timedelta(seconds=passed_time * ((training_parameters['epochs']-epoch)/100))))
 
             # Additional print performance of the model every 1000 steps
             if epoch%1000 == 0:
