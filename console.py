@@ -9,6 +9,11 @@ from Model import DenseModel
 import tensorflow as tf
 import numpy as np
 
+from Connect_four import Connect_four
+from Go import Go
+
+from Testing import test_game
+
 from pettingzoo.classic import connect_four_v3
 from pettingzoo.classic import go_v5
 
@@ -21,13 +26,15 @@ games = {
         'id': 'connect_four',
         'name': 'Connect Four',
         'description': 'Connect-Four is a tic-tac-toe-like two-player game in which players alternately place pieces on a vertical board 7 columns across and 6 rows high.', # https://mathworld.wolfram.com
-        'game_import': connect_four_v3
+        'game_import': connect_four_v3,
+        'play': Connect_four
     },
     'go': {
         'id': 'go',
         'name': 'Go',
         'description': 'Go is an adversarial game with the objective of surrounding a larger total area of the board with one\'s stones than the opponent. As the game progresses, the players position stones on the board to map out formations and potential territories.', # Matthews, Charles (2004). Teach Yourself Go.
-        'game_import': go_v5
+        'game_import': go_v5,
+        'play': Go
     }
 }
 
@@ -115,8 +122,8 @@ class MenuItem():
 
 
 def greeting(fnct):
-    menu = Menu('Greetings!')
-    menu.append('Next', fnct, [])
+    menu = Menu(f'Welcome to this reinforcement learning approach to classical board games. It uses the Deep Q-Learning algorithm and currently includes the games {" and ".join([games[game]["name"] for game in games])}. This program was created as part of the "Implementing Artificial Neural Networks with Tensorflow" course at the University of Osnabrück in the winter semester 2021/22 by Niklas Schemmer and Dominik Brockmann.')
+    menu.append('Press Enter to continue', fnct, [])
     menu.start()
 
 def select_game():
@@ -192,13 +199,25 @@ def train(game, save_path):
 
 def play(game, save_path):
     try:
-        # start playing
-        print("start playing")
+        env = games[game]['game_import'].env()
+        env.reset()
+        action_space = env.action_space(env.agents[0]).n
+        observation_space = np.prod(env.observation_space(env.agents[0])['observation'].shape)
+        policy_net = DenseModel(parameters['hidden_units'], action_space)
+
+        checkpoint = tf.train.Checkpoint(model=policy_net, step=tf.Variable(0))
+        cp_manager = tf.train.CheckpointManager(checkpoint, save_path, max_to_keep=3)
+        if cp_manager.latest_checkpoint:
+            checkpoint.restore(cp_manager.latest_checkpoint)
+
+        while True:
+            test_game(env, games[game]['play'](), policy_net, observation_space)
     except KeyboardInterrupt:
         play_pause(game, save_path)
-    except Exception:
-        print("Error")
-        select_game()
+    except Exception as e:
+        print(e)
+        raise e
+        #select_game()
 
 greeting(select_game)
 keyboard.wait()
