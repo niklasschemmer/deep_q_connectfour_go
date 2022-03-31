@@ -31,7 +31,35 @@ class DeepQ_Agent():
         if rate > random.random():
             return random.randrange(self.num_actions), rate, True
         else:
-            return np.argmax(policy_net(np.atleast_2d(np.atleast_2d(observation).astype('float32')))), rate, False
+            return np.argmax(policy_net(np.atleast_2d(observation).astype('float32'))), rate, False
+
+    def select_random_policy(self, action_mask):
+        allowed_actions = np.where(np.array(action_mask) == 1)[0]
+        if len(allowed_actions) == 0:
+            return 0
+        else:
+            return np.random.choice(allowed_actions)
+
+def test_against_random_policy(env, model, policy_net, observation_space, num_games=100):
+    policy_wins = 0
+    for i in range(num_games):
+        env.reset()
+        play_agent = env.agents[0]
+        for agent in env.agent_iter():
+            observation, reward, done, info = env.last()
+            observation['observation'] = tf.reshape(observation['observation'], shape=(observation_space))
+            action = None
+            if agent==play_agent:
+                policy_wins += reward
+                action = np.argmax(policy_net(np.atleast_2d(observation['observation']).astype('float32')))
+            else:
+                action = model.select_random_policy(observation['action_mask'])
+            if done == False:
+                env.step(action)
+            else:
+                env.step(None)
+
+    return policy_wins/num_games
 
 def copy_weights(Copy_from, Copy_to):
 	variables2 = Copy_from.trainable_variables
@@ -115,11 +143,12 @@ def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager
 
             copy_weights(policy_net, target_net)
 
-            if epoch%100 == 0:
-                passed_time = (time.time() - start_time)
-                start_time = time.time()
-                formated = "{}".format(str(timedelta(seconds=passed_time * ((parameters['epochs']-epoch)/50))))
+            passed_time = (time.time() - start_time)
+            start_time = time.time()
+            formated = "{}".format(str(timedelta(seconds=passed_time * ((parameters['epochs']-epoch)/100))))
+            if epoch%1000 == 0:
+                print(f"Episode:{epoch} Remaining Time: {formated} Winrate against random policy:{test_against_random_policy(env, model, policy_net, observation_space)} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f}")
+                cp_manager.save()
+            elif epoch%100 == 0:
                 print(f"Episode:{epoch} Remaining Time: {formated} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
 
-            if epoch%1000 == 500:
-                cp_manager.save()

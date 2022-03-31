@@ -32,11 +32,11 @@ games = {
 }
 
 parameters = {
-    'batch_size': 64,
+    'batch_size': 128,
     'gamma': 0.99,
     'eps_start': 1,
     'eps_end': 0,
-    'eps_decay': 0.000001,
+    'eps_decay': 0.00001,
     'memory_size': 1000000,
     'epochs': 170000,
     'learning_rate': 0.0001,
