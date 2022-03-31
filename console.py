@@ -184,7 +184,7 @@ def train(game, save_path):
         target_net = DenseModel(parameters['hidden_units'], action_space)
         memory = ReplayMemory(parameters['memory_size'])
 
-        checkpoint = tf.train.Checkpoint(model=policy_net, step=tf.Variable(0))
+        checkpoint = tf.train.Checkpoint(model=policy_net, step=tf.Variable(0), epoch=tf.Variable(0))
         cp_manager = tf.train.CheckpointManager(checkpoint, save_path, max_to_keep=3)
         if cp_manager.latest_checkpoint:
             checkpoint.restore(cp_manager.latest_checkpoint)
@@ -205,7 +205,7 @@ def play(game, save_path):
         observation_space = np.prod(env.observation_space(env.agents[0])['observation'].shape)
         policy_net = DenseModel(parameters['hidden_units'], action_space)
 
-        checkpoint = tf.train.Checkpoint(model=policy_net, step=tf.Variable(0))
+        checkpoint = tf.train.Checkpoint(model=policy_net, step=tf.Variable(0), epoch=tf.Variable(0))
         cp_manager = tf.train.CheckpointManager(checkpoint, save_path, max_to_keep=3)
         if cp_manager.latest_checkpoint:
             checkpoint.restore(cp_manager.latest_checkpoint)
