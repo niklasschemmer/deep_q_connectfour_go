@@ -123,7 +123,7 @@ class MenuItem():
 
 def greeting(fnct):
     menu = Menu(f'Welcome to this reinforcement learning approach to classical board games. It uses the Deep Q-Learning algorithm and currently includes the games {" and ".join([games[game]["name"] for game in games])}. This program was created as part of the "Implementing Artificial Neural Networks with Tensorflow" course at the University of Osnabrück in the winter semester 2021/22 by Niklas Schemmer and Dominik Brockmann.')
-    menu.append('Next', fnct, [])
+    menu.append('Press Enter to continue', fnct, [])
     menu.start()
 
 def select_game():
