@@ -8,20 +8,24 @@ Authors: Dominik Brockmann, Niklas Schemmer
 import os
 import time
 import keyboard
+from numpy import array
 
 class Connect_four():
     """
     A connect four wrapper.
 
-    This creates a wrapper that interacts with the console to let the human player plya against the bot.
+    This creates a wrapper that interacts with the console to let the human player play against the bot.
     It provides some helpful functions to create a console UI.
     """
     def __init__(self):
+        """
+        Init the wrapper.
+        """
         self.selected = 0
 
-    def draw(self, board, active):
+    def draw(self, board: array, active: bool):
         """
-        Draw the input line into the console with all possible inputs.
+        Draw the input column into the console with all possible inputs.
 
         Parameter board: A matrix containing the whole board with own and opponents coins
         Parameter active: Is the manual player currently playing
@@ -34,7 +38,7 @@ class Connect_four():
         for row in range(6):
             print(10*' ', end='')
             for column in range(7):
-                # Draw coins in line and where to throw own coin
+                # Draw coins in column and where to throw own coin
                 if active:
                     print('|' if column == self.selected else ' ', end='')
                     print('x' if board[row][column][0] == 1 else 'o' if board[row][column][1] == 1 else '_' if row == 5 else ' ', end='')
@@ -44,9 +48,9 @@ class Connect_four():
                 if column == 6:
                     print('\n', end='')
 
-    def left(self, board, actions):
+    def left(self, board: array, actions: array):
         """
-        Go into a lefter column to select whether to throw a coin or not,
+        Go into a lefter column to select whether to throw a coin or not.
 
         Parameter board: A matrix contain the board layout
         Parameter actions: Action mask containing possible actions
@@ -59,9 +63,9 @@ class Connect_four():
             self.left(board, actions)
         self.draw(board, True)
 
-    def right(self, board, actions):
+    def right(self, board: array, actions: array):
         """
-        Go into a righter column to select whether to throw a coin or not,
+        Go into a righter column to select whether to throw a coin or not.
 
         Parameter board: A matrix contain the board layout
         Parameter actions: Action mask containing possible actions
@@ -104,7 +108,7 @@ class Connect_four():
         """
         os.system('cls' if os.name=='nt' else 'clear')
 
-    def manual_policy(self, observation, action_mask):
+    def manual_policy(self, observation: array, action_mask: array):
         """
         This is the manual policy of the player.
 
