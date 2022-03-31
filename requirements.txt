@@ -1,0 +1,6 @@
+keyboard==0.13.5
+matplotlib==3.5.0
+numpy==1.21.4
+PettingZoo==1.17.0
+plotnine==0.8.0
+tensorflow==2.7.0
