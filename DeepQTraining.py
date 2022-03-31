@@ -1,5 +1,6 @@
 import os
 import time
+import csv
 from time import sleep
 import math
 import random
@@ -70,7 +71,7 @@ def copy_weights(Copy_from, Copy_to):
 def load_checkpoint(checkpoint, path):
     checkpoint.restore(path)
 
-def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, memory, action_space, observation_space):
+def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, save_path, memory, action_space, observation_space):
     with tf.device("GPU"):
         optimizer = tf.keras.optimizers.Adam(
                         learning_rate=parameters['learning_rate'],
@@ -147,10 +148,12 @@ def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager
             passed_time = (time.time() - start_time)
             start_time = time.time()
             formated = "{}".format(str(timedelta(seconds=passed_time * ((parameters['epochs']-epoch)/100))))
-            if epoch%1000 == 0:
-                print(f"Episode:{epoch} Remaining Time: {formated} Winrate against random policy:{test_against_random_policy(env, model, policy_net, observation_space)} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f}")
+            if epoch%100 == 0:
+                policy = test_against_random_policy(env, model, policy_net, observation_space)
+                print(f"Episode:{epoch} Remaining Time: {formated} Winrate against random policy:{policy} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
                 cp_manager.save()
-            elif epoch%100 == 0:
-                print(f"Episode:{epoch} Remaining Time: {formated} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
+                with open(save_path + '/accuracy.csv', 'a' if os.path.exists(save_path + '/accuracy.csv') else 'w+', newline='') as f:
+                    writer = csv.writer(f, delimiter=',')
+                    writer.writerow([policy])
 
             checkpoint.epoch.assign_add(1)

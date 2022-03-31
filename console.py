@@ -12,6 +12,7 @@ import numpy as np
 from ConnectFour import Connect_four
 from Go import Go
 
+from Plotting import plot_accuracy
 from Testing import test_game
 
 from pettingzoo.classic import connect_four_v3
@@ -136,6 +137,7 @@ def select_play(game):
     menu = Menu('Do you want to train or play ' + games[game]['name'] + '?')
     menu.append('Train Agent', train_load, [game], f'Train the agent in {games[game]["name"]} to become an unbeatable AI!')
     menu.append('Play against Agent', play_load, [game], f'Play against the agent in {games[game]["name"]} and get defeated by your own creation!')
+    menu.append('Plot the accuracy of a saved training', plot_load, [game], f'Plot the accuracy of the quality measurement of a previous training. Note: you can only load saved trainings that used the same parameters that you defined.')
     menu.start()
 
 def train_load(game):
@@ -162,10 +164,27 @@ def play_load(game):
     if len(sessions) == 0:
         menu.append('Train Agent first', train_load, [game])
     menu.append('Play against untrained Agent', play, [game, folder_path + str(int(time.time()))])
-    menu.append('Exit program to change parameters', quit, [])
     for i in range(len(sessions)):
         menu.append(str(datetime.datetime.fromtimestamp(int(sessions[i]))), play, [game, folder_path + sessions[i]])
     menu.start()
+
+def plot_load(game):
+    parameters_str = base64.b64encode(str(list(parameters.values())).encode('ascii')).decode('ascii')
+    folder_path = 'checkpoints/' + games[game]['id'] + '/' + parameters_str + '/'
+
+    sessions = [f for f in os.listdir(folder_path) if os.path.isdir(folder_path + f)] if os.path.isdir(folder_path) else []
+    menu = Menu(f'Which training of {games[game]["name"]} do you want to plot?') \
+      if len(sessions) > 0 else \
+      Menu('There are no checkpoints for the current parameters. Please train the agent first. If you already have a trained agent using other parameters, please change these and restart the program.')
+    if len(sessions) == 0:
+        menu.append('Train Agent first', train_load, [game])
+    for i in range(len(sessions)):
+        menu.append(str(datetime.datetime.fromtimestamp(int(sessions[i]))), start_plot, [game, folder_path + sessions[i]])
+    menu.start()
+
+def start_plot(game, save_path):
+    plot_accuracy(save_path)
+    plot_load(game)
 
 def play_pause(game, play_again):
     menu = Menu(f'Do you want to play {games[game]["name"]} again or return to the menu?')
@@ -189,7 +208,7 @@ def train(game, save_path):
         if cp_manager.latest_checkpoint:
             checkpoint.restore(cp_manager.latest_checkpoint)
 
-        run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, memory, action_space, observation_space)
+        run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, save_path, memory, action_space, observation_space)
     except Exception as e:
         print(e)
         raise e
