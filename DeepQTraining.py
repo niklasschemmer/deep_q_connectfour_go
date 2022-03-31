@@ -80,13 +80,13 @@ def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager
 
         strategy = EpsilonGreedyStrategy(parameters['eps_start'], parameters['eps_end'], parameters['eps_decay'])
         model = DeepQ_Agent(strategy, action_space)
-        
+
         Experience = namedtuple('Experience', ['observations','actions', 'rewards', 'next_observations', 'dones'])
 
         copy_weights(policy_net, target_net)
 
         start_time = time.time()
-        for epoch in range(parameters['epochs']):
+        while int(checkpoint.epoch) < parameters['epochs']:
             env.reset()
             losses = []
 
@@ -143,6 +143,7 @@ def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager
 
             copy_weights(policy_net, target_net)
 
+            epoch = int(checkpoint.epoch)
             passed_time = (time.time() - start_time)
             start_time = time.time()
             formated = "{}".format(str(timedelta(seconds=passed_time * ((parameters['epochs']-epoch)/100))))
@@ -152,3 +153,4 @@ def run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager
             elif epoch%100 == 0:
                 print(f"Episode:{epoch} Remaining Time: {formated} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
 
+            checkpoint.epoch.assign_add(1)
