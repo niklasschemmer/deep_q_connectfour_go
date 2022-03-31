@@ -109,13 +109,13 @@ def test_against_random_policy(env, model: object, policy_net: object, observati
     """
     # The amount of wins our trained policy makes
     policy_wins = 0
-    
+
     for i in range(num_games):
         env.reset()
 
         # Select the agent that will be played by the trained policy
         play_agent = env.agents[0]
-        
+
         for agent in env.agent_iter():
             observation, reward, done, info = env.last()
 
@@ -247,7 +247,7 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
                 # Remember current step to save it with the next step later in the replay buffer
                 last_state[agent]['action'] = action
                 last_state[agent]['observation'] = observation['observation']
-                
+
                 if done == False:
                     env.step(action)
                 else:
@@ -265,7 +265,7 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
             # Additional print performance of the model every 1000 steps
             if epoch%1000 == 0:
                 # Calculate accuracy against random policy and save in a file
-                accuracy = test_against_random_policy(env, model, policy_net, observation_space)                
+                accuracy = test_against_random_policy(env, model, policy_net, observation_space)
                 with open(save_path + '/accuracy.csv', 'a' if os.path.exists(save_path + '/accuracy.csv') else 'w+', newline='') as f:
                     writer = csv.writer(f, delimiter=',')
                     writer.writerow([accuracy])

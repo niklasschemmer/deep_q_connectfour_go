@@ -10,17 +10,17 @@ import os
 import time
 import keyboard
 import datetime
-from DeepQTraining import run_training
-from ReplayMemory import ReplayMemory
-from Model import DenseModel
+from training.DeepQTraining import run_training
+from training.ReplayMemory import ReplayMemory
+from training.Model import DenseModel
 import tensorflow as tf
 import numpy as np
 
-from ConnectFour import Connect_four
-from Go import Go
+from games.ConnectFour import Connect_four
+from games.Go import Go
 
-from Plotting import plot_accuracy
-from Testing import test_game
+from tools.Plotting import plot_accuracy
+from testing.Testing import test_game
 
 from pettingzoo.classic import connect_four_v3
 from pettingzoo.classic import go_v5
