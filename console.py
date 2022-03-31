@@ -9,7 +9,7 @@ from Model import DenseModel
 import tensorflow as tf
 import numpy as np
 
-from Connect_four import Connect_four
+from ConnectFour import Connect_four
 from Go import Go
 
 from Testing import test_game
