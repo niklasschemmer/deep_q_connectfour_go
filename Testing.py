@@ -31,7 +31,7 @@ def test_game(env, game: object, policy_net: object, observation_space: np.array
         # Get last state of game and draw it into the console
         observation, _, done, _ = env.last()
         observation_reshaped = tf.reshape(observation['observation'], shape=(observation_space))
-        game.draw(observation['observation'], agent == player_name if not done else False)
+        game.draw(observation['observation'], agent == player_name)
 
         if done == False:
             # Let either the human player or the trained policy play
