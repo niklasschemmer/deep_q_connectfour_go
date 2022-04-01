@@ -19,9 +19,9 @@ python main.py
 
 ## Usage
 
-After starting a console menu guides through different options. First, you can select a game. Then if you want to train an agent in this game, play against an already trained agent or plot the accuracy of a previous training obtained by the quality measure.
+After starting, a console menu guides through different options. First, you can select a game. Then if you want to train an agent in this game, play against an already trained agent or plot the accuracy of a previous training obtained by the quality measure.
 
-The program automatically saves the training status every 1000 episodes. Along with the data of the trained network, the number of actions and episodes and the accuracy is saved. These checkpoints are can be found in the folder checkpoints/{game}/{base64(parameters)}/{start_time}. This path uses a base64 representation of the parameters to automatically match checkpoints with the parameters that were used.
+The program automatically saves the training status every 1000 episodes. Along with the data of the trained network, the number of actions and episodes and the accuracy are saved. These checkpoints can be found in the folder checkpoints/{game}/{base64(parameters)}/{start_time}. This path uses a base64 representation of the parameters to automatically match checkpoints with the parameters that were used.
 
 ## CUDA
 
