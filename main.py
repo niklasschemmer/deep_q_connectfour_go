@@ -20,7 +20,7 @@ from games.ConnectFour import Connect_four
 from games.Go import Go
 
 from tools.Plotting import plot_accuracy
-from testing.Testing import test_game
+from testing.Testing import test_game, random_policy_go, random_policy_connect_four
 
 from pettingzoo.classic import connect_four_v3
 from pettingzoo.classic import go_v5
@@ -44,14 +44,38 @@ games = {
         'name': 'Connect Four',
         'description': 'Connect-Four is a tic-tac-toe-like two-player game in which players alternately place pieces on a vertical board 7 columns across and 6 rows high.', # https://mathworld.wolfram.com
         'game_import': connect_four_v3,
-        'play': Connect_four
+        'play': Connect_four,
+        'random_policy': random_policy_connect_four,
+        'training_params': {
+            'batch_size': 64,
+            'gamma': 0.985,
+            'eps_start': 1,
+            'eps_end': 0.05,
+            'eps_decay': 0.00002,
+            'memory_size': 100000,
+            'epochs': 100000,
+            'learning_rate': 0.00001,
+            'hidden_units': [75, 50, 50, 50]
+        }
     },
     'go': {
         'id': 'go',
         'name': 'Go',
         'description': 'Go is an adversarial game with the objective of surrounding a larger total area of the board with one\'s stones than the opponent. As the game progresses, the players position stones on the board to map out formations and potential territories.', # Matthews, Charles (2004). Teach Yourself Go.
         'game_import': go_v5,
-        'play': Go
+        'play': Go,
+        'random_policy': random_policy_go,
+        'training_params': {
+            'batch_size': 128,
+            'gamma': 0.9995,
+            'eps_start': 1,
+            'eps_end': 0.01,
+            'eps_decay': 0.00002,
+            'memory_size': 500000,
+            'epochs': 200000,
+            'learning_rate': 0.000008,
+            'hidden_units': [150, 150, 100, 50]
+        }
     }
 }
 
@@ -68,18 +92,6 @@ Attribute epochs: The goal number of epochs; end if trained for so many epochs
 Attribute learning_rate: The learning rate of the used Optimizer
 Attribute hidden_units: An Array with each number representing the number of neurons in one hidden layer
 """
-parameters = {
-    'batch_size': 128,
-    'gamma': 0.99,
-    'eps_start': 1,
-    'eps_end': 0,
-    'eps_decay': 0.000001,
-    'memory_size': 1000000,
-    'epochs': 170000,
-    'learning_rate': 0.0001,
-    'hidden_units': [100, 75, 50, 25]
-}
-
 
 class Menu():
     """
@@ -242,9 +254,8 @@ def train_load(game):
 
     Parameter game: The game configuration holding name, description, etc.
     """
-
     # build save path from parameters
-    parameters_str = base64.b64encode(str(list(parameters.values())).encode('ascii')).decode('ascii')
+    parameters_str = base64.b64encode(str(list(games[game]['training_params'].values())).encode('ascii')).decode('ascii')
     folder_path = 'checkpoints/' + games[game]['id'] + '/' + parameters_str + '/'
 
     # build menu from found savings
@@ -266,7 +277,7 @@ def play_load(game):
     """
 
     # build save path from parameters
-    parameters_str = base64.b64encode(str(list(parameters.values())).encode('ascii')).decode('ascii')
+    parameters_str = base64.b64encode(str(list(games[game]['training_params'].values())).encode('ascii')).decode('ascii')
     folder_path = 'checkpoints/' + games[game]['id'] + '/' + parameters_str + '/'
 
     # build menu from found savings
@@ -290,7 +301,7 @@ def plot_load(game):
     """
 
     # build save path from parameters
-    parameters_str = base64.b64encode(str(list(parameters.values())).encode('ascii')).decode('ascii')
+    parameters_str = base64.b64encode(str(list(games[game]['training_params'].values())).encode('ascii')).decode('ascii')
     folder_path = 'checkpoints/' + games[game]['id'] + '/' + parameters_str + '/'
 
     # build menu from found savings
@@ -345,11 +356,11 @@ def train(game, save_path):
         observation_space = np.prod(env.observation_space(env.agents[0])['observation'].shape)
 
         # create the networks
-        policy_net = DenseModel(parameters['hidden_units'], action_space)
-        target_net = DenseModel(parameters['hidden_units'], action_space)
+        policy_net = DenseModel(games[game]['training_params']['hidden_units'], action_space)
+        target_net = DenseModel(games[game]['training_params']['hidden_units'], action_space)
 
         # initialize the replay memory
-        memory = ReplayMemory(parameters['memory_size'])
+        memory = ReplayMemory(games[game]['training_params']['memory_size'])
 
         # create the checkpoint and checkpoint manager
         # the network, step and epoch is saved
@@ -360,7 +371,7 @@ def train(game, save_path):
             checkpoint.restore(cp_manager.latest_checkpoint)
 
         # start the training process
-        run_training(env, parameters, policy_net, target_net, checkpoint, cp_manager, save_path, memory, action_space, observation_space)
+        run_training(env, games[game]['training_params'], games[game]['random_policy'], policy_net, target_net, checkpoint, cp_manager, save_path, memory, action_space, observation_space)
     except Exception as e:
         print(e)
         raise e
@@ -382,7 +393,7 @@ def play(game, save_path):
         observation_space = np.prod(env.observation_space(env.agents[0])['observation'].shape)
 
         # create the network
-        policy_net = DenseModel(parameters['hidden_units'], action_space)
+        policy_net = DenseModel(games[game]['training_params']['hidden_units'], action_space)
 
         # create the checkpoint and checkpoint manager
         # the network, step and epoch is saved

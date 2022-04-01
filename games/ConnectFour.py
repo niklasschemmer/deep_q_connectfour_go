@@ -8,7 +8,7 @@ Authors: Dominik Brockmann, Niklas Schemmer
 import os
 import time
 import keyboard
-from numpy import array
+import numpy as np
 
 class Connect_four():
     """
@@ -23,7 +23,7 @@ class Connect_four():
         """
         self.selected = 0
 
-    def draw(self, board: array, active: bool):
+    def draw(self, board: np.array, active: bool):
         """
         Draw the input column into the console with all possible inputs.
 
@@ -48,7 +48,7 @@ class Connect_four():
                 if column == 6:
                     print('\n', end='')
 
-    def left(self, board: array, actions: array):
+    def left(self, board: np.array, actions: np.array):
         """
         Go into a lefter column to select whether to throw a coin or not.
 
@@ -63,7 +63,7 @@ class Connect_four():
             self.left(board, actions)
         self.draw(board, True)
 
-    def right(self, board: array, actions: array):
+    def right(self, board: np.array, actions: np.array):
         """
         Go into a righter column to select whether to throw a coin or not.
 
@@ -108,7 +108,7 @@ class Connect_four():
         """
         os.system('cls' if os.name=='nt' else 'clear')
 
-    def manual_policy(self, observation: array, action_mask: array):
+    def manual_policy(self, observation: np.array, action_mask: np.array):
         """
         This is the manual policy of the player.
 

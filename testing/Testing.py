@@ -3,6 +3,7 @@ Module to test a game ploicy with manual play
 
 Authors: Dominik Brockmann, Niklas Schemmer
 """
+import random
 import tensorflow as tf
 import numpy as np
 import time
@@ -49,3 +50,35 @@ def test_game(env, game: object, policy_net: object, observation_space: np.array
             else:
                 game.lose()
             return
+
+def random_policy_go(action_mask: np.array):
+    """
+    Select an action from the random policy.
+
+    Parameter action_mask: The mask that tells us which actions are possible
+    """
+    # Get indices of possible actions
+    allowed_actions = np.where(np.array(action_mask) == 1)[0]
+
+    # Return zero if no actions possible
+    if len(allowed_actions) == 0 or 0.1 > random.random():
+        return len(action_mask) - 1
+    # Return random index if possible actions exist
+    else:
+        return np.random.choice(allowed_actions)
+
+def random_policy_connect_four(action_mask: np.array):
+    """
+    Select an action from the random policy.
+
+    Parameter action_mask: The mask that tells us which actions are possible
+    """
+    # Get indices of possible actions
+    allowed_actions = np.where(np.array(action_mask) == 1)[0]
+
+    # Return zero if no actions possible
+    if len(allowed_actions) == 0:
+        return len(action_mask) - 1
+    # Return random index if possible actions exist
+    else:
+        return np.random.choice(allowed_actions)

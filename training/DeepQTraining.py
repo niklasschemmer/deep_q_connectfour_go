@@ -16,12 +16,13 @@ import random
 import base64
 import datetime
 from datetime import timedelta
+from typing import Callable
 import numpy as np
 from statistics import mean
 from collections import namedtuple
 import tensorflow as tf
 
-from ReplayMemory import ReplayMemory
+from .ReplayMemory import ReplayMemory
 
 class EpsilonGreedyStrategy():
     """
@@ -52,17 +53,15 @@ class DeepQ_Agent():
     """
     The agent used for select random or calculate actions from the policy.
     """
-    def __init__(self, strategy: object, num_actions: int):
+    def __init__(self, strategy: object):
         """
         Initialize the deep q agent.
 
         Parameter strategy: The strategy of the exploration rate
-        Parameter num_actions: The amount of actions that can be chosen
         """
         self.strategy = strategy
-        self.num_actions = num_actions
 
-    def select_greedy_action(self, observation: np.array, policy_net, current_step):
+    def select_greedy_action(self, observation: np.array, policy_net: object, current_step: object, random_policy: Callable):
         """
         Select an action from the exploration rate telling us to go exploring or do what the model wants.
 
@@ -75,27 +74,11 @@ class DeepQ_Agent():
 
         # Choose to explore or to exploit
         if rate > random.random():
-            return random.randrange(self.num_actions), rate, True
+            return random_policy(observation['action_mask']), rate, True
         else:
-            return np.argmax(policy_net(np.atleast_2d(observation).astype('float32'))), rate, False
+            return np.argmax(policy_net(np.atleast_2d(observation['observation']).astype('float32'))), rate, False
 
-    def select_random_policy(self, action_mask):
-        """
-        Select an action from the random policy.
-
-        Parameter action_mask: The mask that tells us which actions are possible
-        """
-        # Get indices of possible actions
-        allowed_actions = np.where(np.array(action_mask) == 1)[0]
-
-        # Return zero if no actions possible
-        if len(allowed_actions) == 0:
-            return 0
-        # Return random index if possible actions exist
-        else:
-            return np.random.choice(allowed_actions)
-
-def test_against_random_policy(env, model: object, policy_net: object, observation_space: np.array, num_games: int =100):
+def test_against_random_policy(env, model: object, policy_net: object, random_policy: Callable, observation_space: np.array, num_games: int =100):
     """
     Test the trained policy against a random policy to get the win rate as quality measure.
 
@@ -131,7 +114,7 @@ def test_against_random_policy(env, model: object, policy_net: object, observati
                 action = np.argmax(policy_net(np.atleast_2d(observation['observation']).astype('float32')))
             else:
                 # Select random action
-                action = model.select_random_policy(observation['action_mask'])
+                action = random_policy(observation['action_mask'])
             if done == False:
                 env.step(action)
             else:
@@ -140,7 +123,7 @@ def test_against_random_policy(env, model: object, policy_net: object, observati
     # Calculate win rate from the amount of won games
     return policy_wins/num_games
 
-def run_training(env: object, training_parameters: dict, policy_net: object, target_net: object, checkpoint: tf.train.Checkpoint, cp_manager: tf.train.CheckpointManager, save_path: str, memory: ReplayMemory, action_space: int, observation_space: int):
+def run_training(env: object, training_parameters: dict, random_policy: Callable, policy_net: object, target_net: object, checkpoint: tf.train.Checkpoint, cp_manager: tf.train.CheckpointManager, save_path: str, memory: ReplayMemory, action_space: int, observation_space: int):
     """
     This starts the Q training with the given parameters.
 
@@ -161,13 +144,11 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
         # Using adam optimizer for the training, others can be chosen as well
         optimizer = tf.keras.optimizers.Adam(
                         learning_rate=training_parameters['learning_rate'],
-                        beta_1=0.9,
-                        beta_2=0.999,
                         epsilon=1e-07)
 
         # Setting up the greedy strategy and the deepQ Agent
         strategy = EpsilonGreedyStrategy(training_parameters['eps_start'], training_parameters['eps_end'], training_parameters['eps_decay'])
-        model = DeepQ_Agent(strategy, action_space)
+        model = DeepQ_Agent(strategy)
 
         # The layout of the experience
         Experience = namedtuple('Experience', ['observations','actions', 'rewards', 'next_observations', 'dones'])
@@ -201,7 +182,7 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
                 reward *= 100
 
                 # Flatten observations
-                observation['observation'] = tf.reshape(observation['observation'], shape=(observation_space))
+                observation['observation'] = tf.cast(tf.reshape(observation['observation'], shape=(observation_space)), dtype=tf.float32)
 
                 # Add up the reward for a game
                 last_state[agent]['reward'] += reward
@@ -225,16 +206,17 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
                         # Convert Q values to float32
                         q_s_a_target = tf.convert_to_tensor(q_s_a_target, dtype = 'float32')
 
-                        # Sum the Q values from actions predicted by the networks
-                        q_s_a = tf.math.reduce_sum(policy_net(np.atleast_2d(observations).astype('float32')) * tf.one_hot(actions, action_space), axis=1)
-                        # Calculate loss from the Q values in the actual step leading to high Q values in the next step, to maximise future rewards
-                        loss = tf.math.reduce_mean(tf.square(q_s_a_target - q_s_a))
 
                         with tf.GradientTape() as tape:
-                            # Apply losses to the trainable variables in the policy network
-                            variables = policy_net.trainable_variables
-                            gradients = tape.gradient(loss, variables)
-                            optimizer.apply_gradients(zip(gradients, variables))
+                            # Sum the Q values from actions predicted by the networks
+                            q_s_a = tf.math.reduce_sum(policy_net(np.atleast_2d(observations).astype('float32')) * tf.one_hot(actions, action_space), axis=1)
+                            # Calculate loss from the Q values in the actual step leading to high Q values in the next step, to maximise future rewards
+                            loss = tf.math.reduce_mean(tf.square(q_s_a_target - q_s_a))
+
+                        # Apply losses to the trainable variables in the policy network
+                        variables = policy_net.trainable_variables
+                        gradients = tape.gradient(loss, variables)
+                        optimizer.apply_gradients(zip(gradients, variables))
 
                         losses.append(loss.numpy())
 
@@ -242,7 +224,7 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
                         losses.append(0)
 
                 # Select an action for the current step by the network
-                action, rate, flag = model.select_greedy_action(observation['observation'], policy_net, int(checkpoint.step))
+                action, rate, flag = model.select_greedy_action(observation, policy_net, int(checkpoint.epoch), random_policy)
 
                 # Remember current step to save it with the next step later in the replay buffer
                 last_state[agent]['action'] = action
@@ -258,24 +240,28 @@ def run_training(env: object, training_parameters: dict, policy_net: object, tar
 
             epoch = int(checkpoint.epoch)
 
-            # Format the remaining time for the console print
-            passed_time = time.time() - start_time
-            formated = "{}".format(str(timedelta(seconds=passed_time * ((training_parameters['epochs']-epoch)/100))))
-
             # Additional print performance of the model every 1000 steps
             if epoch%1000 == 0:
+                # Format the remaining time for the console print
+                passed_time = time.time() - start_time
+                start_time = time.time()
+                formated = "{}".format(str(timedelta(seconds=passed_time * ((training_parameters['epochs']-epoch)/100))))
+
+                cp_manager.save()
                 # Calculate accuracy against random policy and save in a file
-                accuracy = test_against_random_policy(env, model, policy_net, observation_space)
+                accuracy = test_against_random_policy(env, model, policy_net, random_policy, observation_space)
                 with open(save_path + '/accuracy.csv', 'a' if os.path.exists(save_path + '/accuracy.csv') else 'w+', newline='') as f:
                     writer = csv.writer(f, delimiter=',')
                     writer.writerow([accuracy])
 
                 print(f"Episode:{epoch} Remaining Time: {formated} Winrate against random policy:{accuracy} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
-
-                cp_manager.save()
-
-            # Print remaining time losses exploration rate every 100 steps
             elif epoch%100 == 0:
+            # Format the remaining time for the console print
+                passed_time = time.time() - start_time
+                start_time = time.time()
+                formated = "{}".format(str(timedelta(seconds=passed_time * ((training_parameters['epochs']-epoch)/100))))
+
+                # Print remaining time losses exploration rate every 100 steps
                 print(f"Episode:{epoch} Remaining Time: {formated} Losses:{mean(losses): 0.1f} rate:{rate: 0.8f} flag:{flag}")
 
             # Increase epoch in checkpoint
