@@ -32,7 +32,9 @@ class Go():
         """
         # Clear the console to redraw and add padding
         self.cls()
-        print(3*'\n', end='')
+        print(2*'\n', end='')
+        print(10*' ' + 'Press Space to pass')
+        print('\n', end='')
 
         # Iterate through each row and column to create the board layout.
         for row in range(len(board[0])):
@@ -161,8 +163,9 @@ class Go():
         block_left = True
         block_right = True
         block_up = True
+        block_space = True
         block_down = True
-        
+
         while True:
             # Go one left
             if not block_left and keyboard.is_pressed('left'):
@@ -176,6 +179,11 @@ class Go():
             # Go one down
             elif not block_down and keyboard.is_pressed('down'):
                 self.down(observation, action_mask)
+            # Pass
+            elif not block_space and keyboard.is_pressed('space'):
+                pass_action = len(observation) * len(observation[0])
+                if action_mask[pass_action] == 1:
+                    return pass_action
             # Place coin on the current field
             elif keyboard.is_pressed('enter'):
                 break
@@ -183,6 +191,7 @@ class Go():
             block_left = keyboard.is_pressed('left')
             block_right = keyboard.is_pressed('right')
             block_up = keyboard.is_pressed('up')
+            block_space = keyboard.is_pressed('space')
             block_down = keyboard.is_pressed('down')
 
             time.sleep(0.001)
