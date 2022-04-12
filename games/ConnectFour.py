@@ -129,6 +129,8 @@ class Connect_four():
 
         block_left = True
         block_right = True
+        block_enter = True
+
         while True:
             # Go one row left
             if not block_left and keyboard.is_pressed('left'):
@@ -137,11 +139,12 @@ class Connect_four():
             elif not block_right and keyboard.is_pressed('right'):
                 self.right(observation, action_mask)
             # If enter is pressed break loop and draw selected action
-            elif keyboard.is_pressed('enter'):
+            elif not block_enter and keyboard.is_pressed('enter'):
                 break
 
             block_left = keyboard.is_pressed('left')
             block_right = keyboard.is_pressed('right')
+            block_enter = keyboard.is_pressed('enter')
 
             time.sleep(0.001)
 

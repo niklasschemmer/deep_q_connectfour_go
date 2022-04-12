@@ -163,8 +163,9 @@ class Go():
         block_left = True
         block_right = True
         block_up = True
-        block_space = True
         block_down = True
+        block_space = True
+        block_enter = True
 
         while True:
             # Go one left
@@ -185,14 +186,15 @@ class Go():
                 if action_mask[pass_action] == 1:
                     return pass_action
             # Place coin on the current field
-            elif keyboard.is_pressed('enter'):
+            elif not block_enter and keyboard.is_pressed('enter'):
                 break
 
             block_left = keyboard.is_pressed('left')
             block_right = keyboard.is_pressed('right')
             block_up = keyboard.is_pressed('up')
-            block_space = keyboard.is_pressed('space')
             block_down = keyboard.is_pressed('down')
+            block_space = keyboard.is_pressed('space')
+            block_enter = keyboard.is_pressed('enter')
 
             time.sleep(0.001)
 
